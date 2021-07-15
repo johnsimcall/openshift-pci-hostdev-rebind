@@ -1,0 +1,36 @@
+variant: openshift
+version: 4.8.0
+metadata:
+  name: 100-worker-vfio-rebind
+  labels:
+    machineconfiguration.openshift.io/role: worker
+systemd:
+  units:
+    - name: vfio-rebind.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Rebinds pci devices to the vfio-pci driver.
+        After=node-valid-hostname.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/var/usrlocal/bin/rebind-to-vfiopci.sh
+        [Install]
+        WantedBy=multi-user.target
+storage:
+  files:
+  - path: /var/usrlocal/bin/rebind-to-vfiopci.sh
+    mode: 0755
+    overwrite: true
+    contents:
+      local: rebind-to-vfiopci.sh
+
+  - path: /etc/sysconfig/vfio-pci-devices
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        worker-0 0000:03:00.1
+        worker-1 0000:03:00.2
+        DEFAULT  0000:03:00.0
