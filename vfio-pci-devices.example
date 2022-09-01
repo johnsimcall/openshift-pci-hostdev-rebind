@@ -1,4 +1,4 @@
-# Update this file's contents and save it to /etc/sysconfig/vfio-pci-devices
+# Update this file's contents and save it to /etc/sysconfig/vfio-pci-devices on each node
 # The keyword "ALL" can also be used if the device is present in every host, at the same location
 
 #HOSTNAME  DOMAIN:BUS:DEVICE.FUNCTION
