@@ -1,0 +1,43 @@
+variant: openshift
+version: 4.10.0
+metadata:
+  name: 100-worker-vfio-pci-rebind
+  labels:
+    machineconfiguration.openshift.io/role: worker
+
+openshift:
+  kernel_arguments:
+    - intel_iommu=on
+
+storage:
+  files:
+  - path: /etc/sysconfig/vfio-pci-devices
+    mode: 0644
+    overwrite: true
+    contents:
+      local: vfio-pci-devices
+
+  - path: /var/usrlocal/bin/rebind-to-vfio-pci.sh
+    # more info on why this file should go into /var/usrlocal/...
+    # https://ostreedev.github.io/ostree/adapting-existing/
+    mode: 0755
+    overwrite: true
+    contents:
+      local: rebind-to-vfio-pci.sh
+
+systemd:
+  units:
+    - name: vfio-rebind.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=Rebind certain PCI devices to the vfio-pci driver
+        After=node-valid-hostname.service
+
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/var/usrlocal/bin/rebind-to-vfio-pci.sh
+
+        [Install]
+        WantedBy=multi-user.target

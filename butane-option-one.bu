@@ -1,0 +1,31 @@
+variant: openshift
+version: 4.10.0
+metadata:
+  name: 100-worker-vfio-pci
+  labels:
+    machineconfiguration.openshift.io/role: worker
+openshift:
+  kernel_arguments:
+    - intel_iommu=on
+storage:
+  files:
+  - path: /etc/modules-load.d/vfio-pci.conf 
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        # Force loading vfio-pci so that VM's can attach to PCI devices later
+        vfio-pci
+  - path: /etc/modprobe.d/vfio-pci.conf
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        options vfio-pci ids=1106:3483 
+        # Unfortunately telling vfio-pci to claim the ID above doesn't work because
+        # that device is already claimed by the built-in xhci_hcd driver.
+        # We will have to unbind/rebind it using a bootup script/systemd service (aka option two)
+        # 
+        # grep -e VFIO -e XHCI_HCD /boot/config-`uname -r`
+        # CONFIG_USB_XHCI_HCD=y  <-- "built-in" drivers always claim their devices during boot, they can't be blaclisted
+        # CONFIG_VFIO=m          <-- "modules" are dynamically loaded when hardware is detected, they can be blacklisted
